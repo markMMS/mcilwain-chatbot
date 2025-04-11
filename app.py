@@ -10,22 +10,29 @@ CORS(app)
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    data = request.get_json()
-    message = data.get("message")
+    try:
+        data = request.get_json()
+        message = data.get("message")
 
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "You're a helpful assistant for McIlwain Mobility. Speak clearly, be friendly, and focus on mobility solutions."},
-            {"role": "user", "content": message}
-        ]
-    )
+        if not message:
+            return jsonify({"error": "No message provided"}), 400
 
-    return jsonify({"response": response['choices'][0]['message']['content']})
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You're a helpful assistant for McIlwain Mobility. Speak clearly, be friendly, and focus on mobility solutions."},
+                {"role": "user", "content": message}
+            ]
+        )
+
+        reply = response['choices'][0]['message']['content']
+        return jsonify({"response": reply})
+
+    except Exception as e:
+        print("❌ ERROR in /chat route:", e)
+        return jsonify({"error": "Something went wrong on the server."}), 500
 
 if __name__ == "__main__":
-    import os
-
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
 
